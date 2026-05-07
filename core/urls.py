@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from coleta.views import SolicitacaoColetaViewSet
-from gamificacao.views import CarteiraViewSet, TransacaoPontoViewSet
+from gamificacao.views import CarteiraViewSet, TransacaoPontoViewSet, CupomViewSet 
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -29,6 +29,7 @@ router.register(r'solicitacoes', SolicitacaoColetaViewSet)
 
 router.register(r'carteiras', CarteiraViewSet)
 router.register(r'extrato', TransacaoPontoViewSet)
+router.register(r'cupons', CupomViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

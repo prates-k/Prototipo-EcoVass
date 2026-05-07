@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Carteira, TransacaoPonto
+from .models import Carteira, TransacaoPonto, Cupom
 
 class CarteiraSerializer(serializers.ModelSerializer):
     class Meta: 
@@ -9,4 +9,9 @@ class CarteiraSerializer(serializers.ModelSerializer):
 class TransacaoPontoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransacaoPonto
+        fields = '__all__'
+        
+class CupomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cupom
         fields = '__all__'
