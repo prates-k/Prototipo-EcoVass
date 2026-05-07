@@ -24,4 +24,19 @@ class TransacaoPonto(models.Model):
     def __str__(self):
         return f"{self.tipo}: {self.quantidade} para {self.carteira.usuario.username}"
 
+class EmpresaParceira(models.Model):
+    nome = models.CharField(max_length=100)
+    categoria = models.CharField(max_length=50)
 
+    def __str__(self):
+        return self.nome
+    
+    
+class Cupom(models.Model):
+    empresa = models.ForeignKey(EmpresaParceira, on_delete=models.CASCADE)
+    titulo = models.CharField(max_length=100)
+    custo_pontos = models.IntegerField()
+    codigo_resgate = models.CharField(max_length=20, unique=True)
+
+    def __str__(self):
+        return f"{self.titulo} - {self.empresa.nome}"

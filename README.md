@@ -20,4 +20,18 @@ O objetivo é otimizar o processo de reciclagem na cidade de Vassouras através 
 ## 🔧 Como executar o projeto
 1. Clone o repositório:
    ```bash
-   git clone [https://github.com/SEU_USUARIO/NOME_DO_REPOSITORIO.git](https://github.com/SEU_USUARIO/NOME_DO_REPOSITORIO.git)
+   git clone [https://github.com/prates-k/Prototipo-EcoVass/tree/main]
+   (https://github.com/prates-k/Prototipo-EcoVass/tree/main)
+
+2. Crie e ative o ambiente virtual:
+python -m venv venv
+# No Windows:
+.\venv\Scripts\activate
+
+3. Instale as dependências:
+pip install -r requirements.txt
+
+4. Execute as migrações e inicie o servidor:
+python manage.py migrate
+python manage.py runserver
+
