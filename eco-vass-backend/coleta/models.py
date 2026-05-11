@@ -14,7 +14,8 @@ class SolicitacaoColeta(models.Model):
     STATUS_CHOICES = [
         ('PENDENTE' , 'Pendente'),
         ('EM_ROTA', 'Em Rota'),
-        ('CONCLUIDO' , 'Concluído')
+        ('CONCLUIDO' , 'Concluído'),
+        ('NAO_COLETADO', 'Não Coletado / Ausente')
     ]
     
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
