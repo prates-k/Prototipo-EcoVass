@@ -3,84 +3,105 @@ import {
   StyleSheet, 
   Text, 
   View, 
-  TouchableOpacity, 
   FlatList, 
+  TouchableOpacity, 
   SafeAreaView, 
-  Modal 
+  Modal,
+  ScrollView
 } from 'react-native';
 import colors from '../../constants/colors';
 
-export default function CuponsScreen() {
-  const [meusPontos, setMeusPontos] = useState(450);
+const CUPONS_DISPONIVEIS = [
+  { id: '1', titulo: 'R$ 10 de Desconto no Hortifrúti', pontosNecessarios: 150, parceiro: 'Hortifrúti Vassouras' },
+  { id: '2', titulo: '1 Café Expresso Grátis', pontosNecessarios: 80, parceiro: 'Café do Ponto' },
+  { id: '3', titulo: 'R$ 15 de Desconto em Pizzaria', pontosNecessarios: 250, parceiro: 'Pizzaria Bella Massa' },
+  { id: '4', titulo: '1 Sacola Ecológica Retornável', pontosNecessarios: 100, parceiro: 'Supermercado Central' },
+];
+
+export default function GamificacaoScreen() {
+  const [saldoPontos, setSaldoPontos] = useState(180);
   const [modalVisivel, setModalVisivel] = useState(false);
-  const [cupomResgatado, setCupomResgatado] = useState(null);
+  const [mensagemModal, setMensagemModal] = useState('');
   const [codigoGerado, setCodigoGerado] = useState('');
+  const [sucessoResgate, setSucessoResgate] = useState(false);
+  const [modalAjudaVisivel, setModalAjudaVisivel] = useState(false);
 
-  const parceiros = [
-    { id: '1', parceiro: 'Padaria do Centro', descricao: 'R$ 10 de Desconto em qualquer compra', custo: 300, validade: '31/12/2026' },
-    { id: '2', parceiro: 'Mercado São Luís', descricao: 'Desconto de 5% no setor de hortifrúti', custo: 200, validade: '15/06/2026' },
-    { id: '3', parceiro: 'Hortifrúti Vassouras', descricao: 'R$ 15 de Desconto (compras acima de R$ 50)', custo: 400, validade: '30/08/2026' },
-    { id: '4', parceiro: 'Café da Praça', descricao: 'Ganhe 1 Pão de Queijo + 1 Café Expresso', custo: 150, validade: '31/07/2026' },
-  ];
-
-  const handleResgatar = (cupom) => {
-    if (meusPontos >= cupom.custo) {
-      setMeusPontos(prev => prev - cupom.custo);
-      
-      const sufixoParceiro = cupom.parceiro.substring(0, 3).toUpperCase();
-      const numeroAleatorio = Math.floor(1000 + Math.random() * 9000);
-      const codigo = `ECO-${sufixoParceiro}-${numeroAleatorio}`;
-      
-      setCodigoGerado(codigo);
-      setCupomResgatado(cupom);
+  const handleResgatarCupom = (cupom) => {
+    if (saldoPontos < cupom.pontosNecessarios) {
+      setSucessoResgate(false);
+      setMensagemModal(`Saldo insuficiente para resgatar este benefício! ❌\n\nVocê precisa de mais ${cupom.pontosNecessarios - saldoPontos} pontos. Continue descartando seus resíduos corretamente para acumular mais!`);
+      setCodigoGerado('');
       setModalVisivel(true);
-    } else {
-      alert(`Pontos insuficientes! Você precisa de mais ${cupom.custo - meusPontos} pontos para este cupom. 😢`);
+      return;
     }
+
+    setSaldoPontos(prevSaldo => prevSaldo - cupom.pontosNecessarios);
+    const codigoUnico = `ECO-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    
+    setSucessoResgate(true);
+    setMensagemModal(`Resgate realizado com sucesso! 🎉\n\nVocê trocou ${cupom.pontosNecessarios} pontos por:\n"${cupom.titulo}" no parceiro ${cupom.parceiro}.`);
+    setCodigoGerado(codigoUnico);
+    setModalVisivel(true);
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <View style={styles.cardContent}>
-        <Text style={styles.parceiroText}>{item.parceiro}</Text>
-        <Text style={styles.descricaoText}>{item.descricao}</Text>
-        <Text style={styles.validadeText}>Válido até: {item.validade}</Text>
-      </View>
-      
-      <View style={styles.actionContainer}>
-        <View style={styles.custoContainer}>
-          <Text style={styles.custoLabel}>Custo</Text>
-          <Text style={styles.custoValor}>{item.custo} pts</Text>
+  const renderCupom = ({ item }) => {
+    const podeResgatar = saldoPontos >= item.pontosNecessarios;
+
+    return (
+      <View style={styles.cardCupom}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.tituloCupom}>{item.titulo}</Text>
+          <Text style={styles.parceiroCupom}>{item.parceiro}</Text>
         </View>
-        
-        <TouchableOpacity 
-          style={styles.resgatarButton} 
-          onPress={() => handleResgatar(item)}
-        >
-          <Text style={styles.resgatarButtonText}>Resgatar</Text>
-        </TouchableOpacity>
+
+        <View style={styles.cardFooter}>
+          <View style={styles.pontosBadge}>
+            <Text style={styles.pontosTexto}>{item.pontosNecessarios} pts</Text>
+          </View>
+
+          <TouchableOpacity 
+            style={[
+              styles.botaoResgatar, 
+              !podeResgatar && styles.botaoBloqueado
+            ]}
+            onPress={() => handleResgatarCupom(item)}
+          >
+            <Text style={[
+              styles.textoBotaoResgatar,
+              !podeResgatar && styles.textoBotaoBloqueado
+            ]}>
+              {podeResgatar ? 'Resgatar' : 'Pontos Insuficientes'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Parcerias & Prêmios</Text>
-          <Text style={styles.headerSubtitle}>Troque seus pontos de reciclagem no comércio local</Text>
-        </View>
-        <View style={styles.pointsBadge}>
-          <Text style={styles.pointsLabel}>Seu Saldo</Text>
-          <Text style={styles.pointsValue}>{meusPontos} pts</Text>
+        <Text style={styles.headerTitle}>Troca de Pontos</Text>
+        
+        <View style={styles.saldoContainer}>
+          <Text style={styles.saldoLabel}>Seu Saldo Atual</Text>
+          <Text style={styles.saldoValor}>{saldoPontos} <Text style={styles.saldoUnidade}>pts</Text></Text>
+          
+          <TouchableOpacity 
+            style={styles.infoButton} 
+            onPress={() => setModalAjudaVisivel(true)}
+          >
+            <Text style={styles.infoButtonText}>i</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      <FlatList
-        data={parceiros}
+      <FlatList 
+        data={CUPONS_DISPONIVEIS}
         keyExtractor={item => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
+        renderItem={renderCupom}
+        contentContainerStyle={styles.listaContainer}
+        showsVerticalScrollIndicator={false}
       />
 
       <Modal
@@ -91,26 +112,86 @@ export default function CuponsScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalIcon}>🎉</Text>
-            <Text style={styles.modalTitle}>Resgate Concluído!</Text>
-            <Text style={styles.modalSubtitle}>Apresente o código abaixo no caixa do estabelecimento:</Text>
+            <Text style={[styles.modalTitle, !sucessoResgate && styles.modalTitleErro]}>
+              {sucessoResgate ? 'Parabéns!' : 'Ops!'}
+            </Text>
             
-            {/* Visual do Bilhete/Cupom */}
-            <View style={styles.ticketContainer}>
-              <Text style={styles.ticketParceiro}>{cupomResgatado?.parceiro}</Text>
-              <Text style={styles.ticketDesc}>{cupomResgatado?.descricao}</Text>
-              
-              <View style={styles.ticketDivider} />
-              
-              <Text style={styles.ticketCodeLabel}>CÓDIGO DE RESGATE</Text>
-              <Text style={styles.ticketCode}>{codigoGerado}</Text>
-            </View>
+            <Text style={styles.modalMensagem}>{mensagemModal}</Text>
+
+            {sucessoResgate && codigoGerado ? (
+              <View style={styles.codigoContainer}>
+                <Text style={styles.codigoLabel}>Apresente este código no parceiro:</Text>
+                <Text style={styles.codigoTexto}>{codigoGerado}</Text>
+              </View>
+            ) : null}
 
             <TouchableOpacity 
-              style={styles.closeButton} 
+              style={[styles.modalBotaoFechar, !sucessoResgate && styles.modalBotaoFecharErro]}
               onPress={() => setModalVisivel(false)}
             >
-              <Text style={styles.closeButtonText}>Fechar e Voltar</Text>
+              <Text style={styles.modalBotaoTexto}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalAjudaVisivel}
+        onRequestClose={() => setModalAjudaVisivel(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContentAjuda}>
+            <Text style={styles.modalAjudaTitle}>Como acumular pontos? ♻️</Text>
+            
+            <ScrollView style={styles.ajudaScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.ajudaTextoIntroducao}>
+                Participar do programa de reciclagem de Vassouras é prático e ajuda a nossa cidade! Veja o fluxo de descarte:
+              </Text>
+
+              <View style={styles.passoContainer}>
+                <Text style={styles.passoNumero}>1</Text>
+                <View style={styles.passoTextoContainer}>
+                  <Text style={styles.passoTitulo}>Separe seus Materiais</Text>
+                  <Text style={styles.passoDescricao}>Higienize papel, plástico, vidro ou metal e coloque-os em sacos separados do lixo comum.</Text>
+                </View>
+              </View>
+
+              <View style={styles.passoContainer}>
+                <Text style={styles.passoNumero}>2</Text>
+                <View style={styles.passoTextoContainer}>
+                  <Text style={styles.passoTitulo}>Marque sua Presença</Text>
+                  <Text style={styles.passoDescricao}>Nos dias de coleta no seu bairro, utilize o aplicativo para sinalizar que você tem materiais para entregar.</Text>
+                </View>
+              </View>
+
+              <View style={styles.passoContainer}>
+                <Text style={styles.passoNumero}>3</Text>
+                <View style={styles.passoTextoContainer}>
+                  <Text style={styles.passoTitulo}>Confirmação do Coletor</Text>
+                  <Text style={styles.passoDescricao}>Ao recolher os sacos na sua calçada, o coletor confirmará a coleta no sistema e os seus pontos serão computados automaticamente!</Text>
+                </View>
+              </View>
+
+              <View style={styles.tabelaContainer}>
+                <Text style={styles.tabelaTitulo}>Tabela de Pontos por Saco:</Text>
+                <View style={styles.tabelaLinha}>
+                  <Text style={styles.tabelaMaterial}>Plástico / Papel</Text>
+                  <Text style={styles.tabelaValor}>+20 pts</Text>
+                </View>
+                <View style={styles.tabelaLinha}>
+                  <Text style={styles.tabelaMaterial}>Vidro / Metal</Text>
+                  <Text style={styles.tabelaValor}>+50 pts</Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity 
+              style={styles.modalBotaoEntendi}
+              onPress={() => setModalAjudaVisivel(false)}
+            >
+              <Text style={styles.modalBotaoTexto}>Entendi!</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -126,199 +207,290 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 30,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    padding: 25,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
     alignItems: 'center',
-  },
-  headerTitleContainer: {
-    flex: 1,
-    paddingRight: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 5,
+    marginBottom: 15,
   },
-  headerSubtitle: {
-    fontSize: 12,
-    color: colors.border,
-  },
-  pointsBadge: {
+  saldoContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 20,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    position: 'relative',
+    width: '80%',
   },
-  pointsLabel: {
-    fontSize: 9,
-    color: colors.accent,
-    fontWeight: 'bold',
+  saldoLabel: {
+    fontSize: 12,
+    color: '#E2E8F0',
+    fontWeight: '600',
     textTransform: 'uppercase',
   },
-  pointsValue: {
-    fontSize: 16,
+  saldoValor: {
+    fontSize: 28,
     fontWeight: 'bold',
+    color: colors.accent,
+  },
+  saldoUnidade: {
+    fontSize: 16,
+    fontWeight: 'normal',
     color: '#FFFFFF',
   },
-  listContent: {
-    padding: 20,
+  infoButton: {
+    position: 'absolute',
+    right: 15,
+    top: '50%',
+    marginTop: -15,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  card: {
+  infoButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+    fontStyle: 'italic',
+  },
+  listaContainer: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  cardCupom: {
     backgroundColor: colors.surface,
     borderRadius: 16,
-    padding: 15,
-    marginBottom: 15,
+    padding: 18,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
   },
-  cardContent: {
+  cardHeader: {
     marginBottom: 15,
   },
-  parceiroText: {
-    fontSize: 18,
+  tituloCupom: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    marginBottom: 4,
   },
-  descricaoText: {
-    fontSize: 14,
+  parceiroCupom: {
+    fontSize: 13,
     color: colors.textSecondary,
-    marginBottom: 8,
+    marginTop: 3,
   },
-  validadeText: {
-    fontSize: 11,
-    color: '#9CA3AF',
-  },
-  actionContainer: {
+  cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: 12,
   },
-  custoContainer: {
-    flexDirection: 'column',
+  pontosBadge: {
+    backgroundColor: 'rgba(14, 71, 73, 0.1)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
   },
-  custoLabel: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-  },
-  custoValor: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.primary,
-  },
-  resgatarButton: {
-    backgroundColor: colors.accent,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-  },
-  resgatarButtonText: {
+  pontosTexto: {
     color: colors.primary,
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  botaoResgatar: {
+    backgroundColor: colors.accent,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+  },
+  botaoBloqueado: {
+    backgroundColor: '#EDF2F7',
+  },
+  textoBotaoResgatar: {
+    color: colors.primary,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  textoBotaoBloqueado: {
+    color: '#A0AEC0',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContent: {
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 25,
     width: '100%',
+    maxWidth: 340,
     alignItems: 'center',
-  },
-  modalIcon: {
-    fontSize: 45,
-    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
+    elevation: 10,
   },
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: colors.primary,
-    marginBottom: 5,
+    color: '#2F855A',
+    marginBottom: 15,
   },
-  modalSubtitle: {
-    fontSize: 13,
-    color: colors.textSecondary,
+  modalTitleErro: {
+    color: '#C53030',
+  },
+  modalMensagem: {
+    fontSize: 14,
+    color: '#4A5568',
     textAlign: 'center',
+    lineHeight: 20,
     marginBottom: 20,
-    paddingHorizontal: 10,
   },
-  ticketContainer: {
-    backgroundColor: colors.background,
+  codigoContainer: {
+    backgroundColor: '#F7FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 15,
     width: '100%',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
     alignItems: 'center',
-    marginBottom: 25,
+    marginBottom: 20,
   },
-  ticketParceiro: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  ticketDesc: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 15,
-  },
-  ticketDivider: {
-    height: 1,
-    width: '100%',
-    backgroundColor: '#D1D5DB',
-    marginBottom: 15,
-  },
-  ticketCodeLabel: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: colors.textSecondary,
-    letterSpacing: 1.5,
+  codigoLabel: {
+    fontSize: 11,
+    color: '#718096',
+    textTransform: 'uppercase',
+    fontWeight: '600',
     marginBottom: 5,
   },
-  ticketCode: {
-    fontSize: 22,
+  codigoTexto: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.primary,
     letterSpacing: 2,
   },
-  closeButton: {
-    backgroundColor: colors.primary,
+  modalBotaoFechar: {
+    backgroundColor: '#2F855A',
     paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 12,
     width: '100%',
+    borderRadius: 12,
     alignItems: 'center',
   },
-  closeButtonText: {
+  modalBotaoFecharErro: {
+    backgroundColor: '#C53030',
+  },
+  modalBotaoTexto: {
     color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 15,
+  },
+  modalContentAjuda: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 25,
+    width: '100%',
+    maxWidth: 340,
+    maxHeight: '80%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+  modalAjudaTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  ajudaScroll: {
+    width: '100%',
+    marginBottom: 15,
+  },
+  ajudaTextoIntroducao: {
+    fontSize: 13,
+    color: '#4A5568',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 20,
+  },
+  passoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  passoNumero: {
+    backgroundColor: colors.primary,
+    color: '#FFFFFF',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    textAlign: 'center',
+    lineHeight: 28,
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginRight: 12,
+  },
+  passoTextoContainer: {
+    flex: 1,
+  },
+  passoTitulo: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+  },
+  passoDescricao: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  tabelaContainer: {
+    backgroundColor: '#EDF2F7',
+    borderRadius: 12,
+    padding: 15,
+    marginTop: 15,
+  },
+  tabelaTitulo: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+    marginBottom: 10,
+  },
+  tabelaLinha: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  tabelaMaterial: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  tabelaValor: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  modalBotaoEntendi: {
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    width: '100%',
+    borderRadius: 12,
+    alignItems: 'center',
   },
 });

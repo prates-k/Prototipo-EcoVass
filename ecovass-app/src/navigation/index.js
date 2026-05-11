@@ -1,13 +1,11 @@
-// src/navigation/index.js
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Platform } from 'react-native';
-
 import { Ionicons } from '@expo/vector-icons'; 
 
-// Importando nossas telas
 import LoginScreen from '../screens/LoginScreen';
+import EnderecoScreen from '../screens/EnderecoScreen';
 import HomeScreen from '../screens/HomeScreen';
 import RotasScreen from '../screens/RotasScreen';
 import CuponsScreen from '../screens/CuponsScreen';
@@ -25,12 +23,9 @@ function TabNavigator() {
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
-          
           height: Platform.OS === 'ios' ? 88 : 65, 
           paddingBottom: Platform.OS === 'ios' ? 30 : 10,
           paddingTop: 10,
-          
-          // Sombra sutil
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.05,
@@ -50,7 +45,7 @@ function TabNavigator() {
         name="Início" 
         component={HomeScreen} 
         options={{
-          tabBarIcon: ({ focused, color, size }) => (
+          tabBarIcon: ({ focused, color }) => (
             <Ionicons 
               name={focused ? "person" : "person-outline"} 
               size={22} 
@@ -63,7 +58,7 @@ function TabNavigator() {
         name="Rotas" 
         component={RotasScreen} 
         options={{
-          tabBarIcon: ({ focused, color, size }) => (
+          tabBarIcon: ({ focused, color }) => (
             <Ionicons 
               name={focused ? "calendar" : "calendar-outline"} 
               size={22} 
@@ -76,7 +71,7 @@ function TabNavigator() {
         name="Prêmios" 
         component={CuponsScreen} 
         options={{
-          tabBarIcon: ({ focused, color, size }) => (
+          tabBarIcon: ({ focused, color }) => (
             <Ionicons 
               name={focused ? "gift" : "gift-outline"} 
               size={22} 
@@ -93,6 +88,7 @@ export default function AppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Endereco" component={EnderecoScreen} />
       <Stack.Screen name="MainApp" component={TabNavigator} />
     </Stack.Navigator>
   );

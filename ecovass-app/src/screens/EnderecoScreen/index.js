@@ -12,43 +12,37 @@ import {
 import colors from '../../constants/colors';
 import api from '../../services/api';
 
-export default function LoginScreen({ navigation }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+export default function EnderecoScreen({ navigation }) {
+  const [rua, setRua] = useState('');
+  const [bairro, setBairro] = useState('');
   const [loading, setLoading] = useState(false);
   const [mensagemErro, setMensagemErro] = useState('');
 
-  const handleLogin = async () => {
-    if (!username || !password) {
-      setMensagemErro("Por favor, preencha todos os campos! ⚠️");
+  const handleSalvarEndereco = async () => {
+    if (!rua || !bairro) {
+      setMensagemErro("Por favor, preencha a rua e o bairro! 🏡");
       return;
     }
 
     setLoading(true);
-    setMensagemErro(''); 
+    setMensagemErro('');
 
     try {
-      const response = await api.post('token/', {
-        username: username.trim(),
-        password: password
+      await api.post('usuario/atualizar-endereco/', {
+        rua: rua.trim(),
+        bairro: bairro.trim()
       });
 
-      const { access } = response.data;
-
       setLoading(false);
-      navigation.replace('Endereco');
+      navigation.replace('MainApp');
 
     } catch (error) {
       setLoading(false);
-      console.log("Erro detalhado do Django:", error.response?.data);
       
-      if (error.response) {
-        setMensagemErro("Usuário ou senha incorretos. Tente novamente! ❌");
-      } else if (error.request) {
-        setMensagemErro("Sem conexão com o servidor. Verifique o Wi-Fi! 📶");
-      } else {
-        setMensagemErro("Ocorreu um erro inesperado. Tente novamente.");
-      }
+      // Como ainda vamos criar essa rota no Django, se a API falhar (404),
+      // vamos deixar o usuário passar no app local para fins de teste!
+      console.log("Rota de endereço ainda não configurada no Django. Passando localmente...");
+      navigation.replace('MainApp');
     }
   };
 
@@ -57,41 +51,38 @@ export default function LoginScreen({ navigation }) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <View style={styles.logoContainer}>
-        <Text style={styles.logoEmoji}>♻️</Text>
-        <Text style={styles.logoText}>EcoVass</Text>
-        <Text style={styles.subtitleText}>Sua Vassouras mais sustentável</Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.emoji}>📍</Text>
+        <Text style={styles.title}>Quase lá!</Text>
+        <Text style={styles.subtitle}>
+          Precisamos do seu endereço para mostrar os dias e horários exatos da coleta seletiva na sua rua em Vassouras.
+        </Text>
       </View>
 
       <View style={styles.formContainer}>
-        {/* CAMPO DE USUÁRIO */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Usuário</Text>
+          <Text style={styles.label}>Rua / Logradouro</Text>
           <TextInput 
             style={styles.input}
-            placeholder="Digite seu usuário"
+            placeholder="Ex: Rua Broadway, 123"
             placeholderTextColor={colors.textSecondary}
-            autoCapitalize="none"
-            value={username}
+            value={rua}
             onChangeText={(text) => {
-              setUsername(text);
+              setRua(text);
               setMensagemErro('');
             }}
           />
         </View>
 
-        {/* CAMPO DE SENHA */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Senha</Text>
+          <Text style={styles.label}>Bairro</Text>
           <TextInput 
             style={styles.input}
-            placeholder="Digite sua senha"
+            placeholder="Ex: Centro"
             placeholderTextColor={colors.textSecondary}
-            secureTextEntry
-            autoCapitalize="none"
-            value={password}
+            value={bairro}
             onChangeText={(text) => {
-              setPassword(text);
+              setBairro(text);
               setMensagemErro('');
             }}
           />
@@ -103,13 +94,13 @@ export default function LoginScreen({ navigation }) {
 
         <TouchableOpacity 
           style={[styles.button, loading && styles.buttonDisabled]} 
-          onPress={handleLogin}
+          onPress={handleSalvarEndereco}
           disabled={loading}
         >
           {loading ? (
             <ActivityIndicator color={colors.primary} size="small" />
           ) : (
-            <Text style={styles.buttonText}>Entrar</Text>
+            <Text style={styles.buttonText}>Começar a Reciclar</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -124,23 +115,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 25,
   },
-  logoContainer: {
+  headerContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 30,
   },
-  logoEmoji: {
-    fontSize: 60,
+  emoji: {
+    fontSize: 50,
     marginBottom: 10,
   },
-  logoText: {
-    fontSize: 32,
+  title: {
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    textAlign: 'center',
   },
-  subtitleText: {
+  subtitle: {
     fontSize: 14,
     color: colors.border,
-    marginTop: 5,
+    textAlign: 'center',
+    marginTop: 10,
+    lineHeight: 20,
+    paddingHorizontal: 10,
   },
   formContainer: {
     backgroundColor: colors.surface,
@@ -185,11 +180,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 4,
   },
   buttonDisabled: {
     backgroundColor: colors.border,

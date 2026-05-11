@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import AppNavigator from './src/navigation'; // Importando nossa estrutura de rotas
+import AppNavigator from './src/navigation';
 
 export default function App() {
   return (
