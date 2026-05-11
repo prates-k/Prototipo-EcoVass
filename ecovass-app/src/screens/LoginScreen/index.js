@@ -9,13 +9,41 @@ import {
   Platform 
 } from 'react-native';
 import colors from '../../constants/colors';
+import api from '../../services/api';
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    navigation.replace('MainApp');
+  const handleLogin = async () => {
+    if (!username || !password) {
+      alert("Por favor, preencha todos os campos! ⚠️");
+      return;
+    }
+
+    try {
+      const response = await api.post('token/', {
+        username: username.trim(),
+        password: password
+      });
+
+      const { access } = response.data;
+
+      alert("Login realizado com sucesso! 🎉");
+
+      navigation.replace('MainApp');
+
+    } catch (error) {
+      console.log("Erro detalhado do Django:", error.response?.data);
+      
+      if (error.response) {
+        alert("Usuário ou senha incorretos. Tente novamente! ❌");
+      } else if (error.request) {
+        alert("Não foi possível conectar ao servidor do EcoVass. Verifique se o computador e o celular estão no mesmo Wi-Fi! 📶");
+      } else {
+        alert("Ocorreu um erro inesperado. Tente novamente mais tarde.");
+      }
+    }
   };
 
   return (
