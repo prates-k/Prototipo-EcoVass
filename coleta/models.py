@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from .utils import buscar_endereco_por_cep
+from django.core.exceptions import ValidationError
 
 class SolicitacaoColeta(models.Model):
     TIPOS_RESIDUO = [
@@ -28,10 +29,24 @@ class SolicitacaoColeta(models.Model):
     criado_em = models.DateTimeField(auto_now_add=True)
     
     def save(self, *args, **kwargs):
-        if self.cep and not self.endereco_descricao:
+        if self.cep:
             info = buscar_endereco_por_cep(self.cep)
+            
             if info:
-                self.endereco_descricao = f"{info['logradouro']}, {info['bairro']} - {info['cidade']}/{info['uf']}"
+                cidade_retornada = info.get('cidade', '').strip().lower()
+                if cidade_retornada != 'vassouras':
+                    raise ValidationError(
+                        f"O EcoVass atualmente atende apenas a cidade de Vassouras. "
+                        f"O CEP informado pertence a {info.get('cidade')}/{info.get('uf')}."
+                    )
+                    
+                if not self.endereco_descricao:
+                    if info['logradouro']:
+                        self.endereco_descricao = f"{info['logradouro']}, {info['bairro']} - {info['cidade']}/{info['uf']}"
+                    else:
+                        self.endereco_descricao = f"{info['bairro']} - {info['cidade']}/{info['uf']}" if info['bairro'] else f"{info['cidade']}/{info['uf']}"
+            else:
+                raise ValidationError("O CEP informado não foi encontrado ou é inválido.")
 
         super().save(*args, **kwargs)
 
