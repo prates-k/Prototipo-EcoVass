@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from .utils import buscar_endereco_por_cep
 
 class SolicitacaoColeta(models.Model):
     TIPOS_RESIDUO = [
@@ -18,7 +18,7 @@ class SolicitacaoColeta(models.Model):
     
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     tipo_residuo = models.CharField(max_length=20, choices=TIPOS_RESIDUO)
-    endereco_descricao = models.TextField(help_text='Descição do Local ou Ponto de Referência')
+    endereco_descricao = models.TextField(blank=True, null=True, help_text='Descrição do Local ou Ponto de Referência')
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     cep = models.CharField(max_length=9, blank=True, null=True)
@@ -27,6 +27,14 @@ class SolicitacaoColeta(models.Model):
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='PENDENTE')
     criado_em = models.DateTimeField(auto_now_add=True)
     
+    def save(self, *args, **kwargs):
+        if self.cep and not self.endereco_descricao:
+            info = buscar_endereco_por_cep(self.cep)
+            if info:
+                self.endereco_descricao = f"{info['logradouro']}, {info['bairro']} - {info['cidade']}/{info['uf']}"
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f'{self.tipo_residuo} - {self.usuario.username} ({self.status})'    
     
